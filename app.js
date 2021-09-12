@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 
 const puppeteer = require("puppeteer");
+var cron = require("node-cron");
+
+
 // const { id, password } = require("../secrate");
 const Sleep = require("./sleep");
 const Popular = require("./models/popular");
@@ -155,11 +158,12 @@ const getdata = async (data) => {
   return [...finology,...indMony];
 };
 
-(async () => {
+cron.schedule("0 */25 * * *", async () => {
+  console.log("web scrapper run");
   try {
     const uri = "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
 
-    await mongoose.connect(uri)
+    let db = await mongoose.connect(uri)
 
     let data = await getdata([{name:"finology",url:"https://blog.finology.in/"},{name:"indMony",url:"https://www.indmoney.com/articles"}]);
     // console.log(data);
@@ -220,10 +224,10 @@ const getdata = async (data) => {
 
     Promise.all([await Post.create(postData), await Popular.create(popularData)]).then((values) => {
       console.log("success popular", postData.length, popularData.length);
+      db.disconnect();
     });
   } catch (error) {
     console.log(error);
   }
+});
 
-  // });
-})();
