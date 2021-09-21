@@ -60,10 +60,11 @@ const finologyData = async (url,page)=>{
         .querySelectorAll("#frmContent > div.pagecontent > div > div > div > div:nth-child(1) > small:nth-child(2)")[0]
         .textContent.trim();
       date = new Date(date).getTime();
-      let author = document
+      let author = "finology";
+/*document
         .querySelectorAll("#MainContent_pnlAuthor > div > div > div > div.col-12.col-md-9 > span.h5.mt-1.d-block")[0]
         .textContent.split("|")[0]
-        .trim();
+        .trim();*/
       data.author = author;
       data.published = Number(date);
       return data;
@@ -157,15 +158,15 @@ const getdata = async (data) => {
   browser.close();
   return [...finology,...indMony];
 };
-
-cron.schedule("0 */25 * * *", async () => {
-  console.log("web scrapper run");
+console.log("start web server");
+cron.schedule("0 11 * * *", async () => {
+  console.log("web scrapper run 11");
   try {
     const uri = "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
 
     let db = await mongoose.connect(uri)
 
-    let data = await getdata([{name:"finology",url:"https://blog.finology.in/"},{name:"indMony",url:"https://www.indmoney.com/articles"}]);
+    let data = await getdata([{name:"finology",url:"https://blog.finology.in/investing"},{name:"indMony",url:"https://www.indmoney.com/articles"}]);
     // console.log(data);
     let postData = [];
     let popularData = [];
@@ -230,4 +231,151 @@ cron.schedule("0 */25 * * *", async () => {
     console.log(error);
   }
 });
+
+cron.schedule("0 15 * * *", async () => {
+  console.log("web scrapper run 15");
+  try {
+    const uri = "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
+
+    let db = await mongoose.connect(uri)
+
+    let data = await getdata([{name:"finology",url:"https://blog.finology.in/finance"}]);
+    // console.log(data);
+    let postData = [];
+    let popularData = [];
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    shuffleArray(data);
+
+    for (let i = 0; i < data.length; i++) {
+      const item = data[i];
+
+      let source = await Source.findOne({ id: item.source.id });
+      if(!source){
+        await Source.create({
+          id:item.source.id,
+          title:item.source.title,
+          url:item.source.url,
+          categories: [],
+          topics: [],
+          updated:"",
+          image:item.source.image,
+          posts: [],
+          items:[]
+        });
+      }
+
+      let post = await Post.findOne({ id: item.id });
+      let newPost = null;
+      if (!post) {
+        let { id, topic, published, originId, title, author, image, source } = item;
+        newPost = {
+          id,
+          keywords: [topic],
+          originId,
+          published,
+          title,
+          author,
+          canonicalUrl: "",
+          image,
+          source,
+        };
+        postData.push(newPost);
+      }
+
+      let popular = await Popular.findOne({ name: item.id });
+
+      if (!popular) {
+        popularData.push({ name: item.id });
+      }
+    }
+
+    Promise.all([await Post.create(postData), await Popular.create(popularData)]).then((values) => {
+      console.log("success popular", postData.length, popularData.length);
+      db.disconnect();
+    });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+cron.schedule("0 20 * * *", async () => {
+  console.log("web scrapper run 20");
+  try {
+    const uri = "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
+
+    let db = await mongoose.connect(uri)
+
+    let data = await getdata([{name:"finology",url:"https://blog.finology.in/ticker-talks"}]);
+    // console.log(data);
+    let postData = [];
+    let popularData = [];
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    shuffleArray(data);
+
+    for (let i = 0; i < data.length; i++) {
+      const item = data[i];
+
+      let source = await Source.findOne({ id: item.source.id });
+      if(!source){
+        await Source.create({
+          id:item.source.id,
+          title:item.source.title,
+          url:item.source.url,
+          categories: [],
+          topics: [],
+          updated:"",
+          image:item.source.image,
+          posts: [],
+          items:[]
+        });
+      }
+
+      let post = await Post.findOne({ id: item.id });
+      let newPost = null;
+      if (!post) {
+        let { id, topic, published, originId, title, author, image, source } = item;
+        newPost = {
+          id,
+          keywords: [topic],
+          originId,
+          published,
+          title,
+          author,
+          canonicalUrl: "",
+          image,
+          source,
+        };
+        postData.push(newPost);
+      }
+
+      let popular = await Popular.findOne({ name: item.id });
+
+      if (!popular) {
+        popularData.push({ name: item.id });
+      }
+    }
+
+    Promise.all([await Post.create(postData), await Popular.create(popularData)]).then((values) => {
+      console.log("success popular", postData.length, popularData.length);
+      db.disconnect();
+    });
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 
