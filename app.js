@@ -10,8 +10,7 @@ const Popular = require("./models/popular");
 const Post = require("./models/post");
 const Source = require("./models/source");
 
-
-const finologyData = async (url,page)=>{
+const finologyData = async (url, page) => {
   await page.goto(url, {
     waitUntil: "networkidle2",
   });
@@ -30,7 +29,7 @@ const finologyData = async (url,page)=>{
       let topic = swiperSelector[i].children[0].querySelectorAll("span")[0].textContent;
       data.push({
         originId: url,
-        id:title,
+        id: title,
         title,
         image,
         topic,
@@ -61,7 +60,7 @@ const finologyData = async (url,page)=>{
         .textContent.trim();
       date = new Date(date).getTime();
       let author = "finology";
-/*document
+      /*document
         .querySelectorAll("#MainContent_pnlAuthor > div > div > div > div.col-12.col-md-9 > span.h5.mt-1.d-block")[0]
         .textContent.split("|")[0]
         .trim();*/
@@ -71,25 +70,23 @@ const finologyData = async (url,page)=>{
     });
     temp[i].author = temp2.author;
     temp[i].published = temp2.published;
-
   }
   return temp;
-}
+};
 
-const indMonyData = async (url,page)=>{
+const indMonyData = async (url, page) => {
   await page.goto(url, {
     waitUntil: "networkidle2",
   });
   await Sleep(5000);
 
   let temp = await page.evaluate(async () => {
-
     let sel = document.querySelectorAll("section .row")[1].children;
 
     let data = [];
     let length = 3;
-    if(sel.length < 3){
-      length = sel.length
+    if (sel.length < 3) {
+      length = sel.length;
     }
     for (let i = 0; i < length; i++) {
       let url = sel[i].querySelector("a").href;
@@ -102,11 +99,11 @@ const indMonyData = async (url,page)=>{
 
       data.push({
         originId: url,
-        id:title,
+        id: title,
         title,
         image,
         topic,
-        published:Number(date),
+        published: Number(date),
         source: {
           image: "https://www.indmoney.com/favicon.ico",
           url: "https://www.indmoney.com/articles",
@@ -134,40 +131,46 @@ const indMonyData = async (url,page)=>{
     temp[i].topic = temp2.topic;
   }
   return temp;
-}
+};
 const getdata = async (data) => {
   const browser = await puppeteer.launch({ headless: true });
   await Sleep(2000);
   let page = await browser.newPage();
   await Sleep(3000);
 
-  let finology=[] ,indMony=[];
+  let finology = [],
+    indMony = [];
   for (let i = 0; i < data.length; i++) {
     const source = data[i];
     console.log(source);
     let d = [];
-    if(source.name == "finology"){
-
-      finology = await finologyData(source.url,page);
-    }
-    else if(source.name == "indMony"){
-      indMony = await indMonyData(source.url,page);
+    if (source.name == "finology") {
+      finology = await finologyData(source.url, page);
+    } else if (source.name == "indMony") {
+      indMony = await indMonyData(source.url, page);
     }
   }
-  console.log("final",finology.length,indMony.length);
+  console.log("final", finology.length, indMony.length);
   browser.close();
-  return [...finology,...indMony];
+  return [...finology, ...indMony];
 };
 console.log("start web server");
 cron.schedule("0 11 * * *", async () => {
-	let day = dateFormat(new Date(), "dd h:MM");
-  console.log("web scrapper run 11",day);
+  let day = dateFormat(new Date(), "dd h:MM");
+  console.log("Investing web scrapper run 11", day);
   try {
-    const uri = "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
+    const uri =
+      "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
 
-    let db = await mongoose.connect(uri)
+    let db = await mongoose.connect(uri);
 
-    let data = await getdata([{name:"finology",url:"https://blog.finology.in/investing"},{name:"indMony",url:"https://www.indmoney.com/articles"}]);
+    let data = await getdata([
+      { name: "finology", url: "https://blog.finology.in/investing" },
+      { name: "finology", url: "https://blog.finology.in/stock-market" },
+      { name: "finology", url: "https://blog.finology.in/behavioral-finance" },
+      { name: "finology", url: "https://blog.finology.in/mutual-fund" },
+      { name: "indMony", url: "https://www.indmoney.com/articles" },
+    ]);
     // console.log(data);
     let postData = [];
     let popularData = [];
@@ -185,17 +188,17 @@ cron.schedule("0 11 * * *", async () => {
       const item = data[i];
 
       let source = await Source.findOne({ id: item.source.id });
-      if(!source){
+      if (!source) {
         await Source.create({
-          id:item.source.id,
-          title:item.source.title,
-          url:item.source.url,
+          id: item.source.id,
+          title: item.source.title,
+          url: item.source.url,
           categories: [],
           topics: [],
-          updated:"",
-          image:item.source.image,
+          updated: "",
+          image: item.source.image,
           posts: [],
-          items:[]
+          items: [],
         });
       }
 
@@ -234,14 +237,15 @@ cron.schedule("0 11 * * *", async () => {
 });
 
 cron.schedule("0 15 * * *", async () => {
-	let day = dateFormat(new Date(), "dd h:MM");
-  console.log("web scrapper run 15",day);
+  let day = dateFormat(new Date(), "dd h:MM");
+  console.log("Finance web scrapper run 15", day);
   try {
-    const uri = "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
+    const uri =
+      "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
 
-    let db = await mongoose.connect(uri)
+    let db = await mongoose.connect(uri);
 
-    let data = await getdata([{name:"finology",url:"https://blog.finology.in/finance"}]);
+    let data = await getdata([{ name: "finology", url: "https://blog.finology.in/finance" }]);
     // console.log(data);
     let postData = [];
     let popularData = [];
@@ -259,17 +263,17 @@ cron.schedule("0 15 * * *", async () => {
       const item = data[i];
 
       let source = await Source.findOne({ id: item.source.id });
-      if(!source){
+      if (!source) {
         await Source.create({
-          id:item.source.id,
-          title:item.source.title,
-          url:item.source.url,
+          id: item.source.id,
+          title: item.source.title,
+          url: item.source.url,
           categories: [],
           topics: [],
-          updated:"",
-          image:item.source.image,
+          updated: "",
+          image: item.source.image,
           posts: [],
-          items:[]
+          items: [],
         });
       }
 
@@ -308,14 +312,15 @@ cron.schedule("0 15 * * *", async () => {
 });
 
 cron.schedule("0 20 * * *", async () => {
-	let day = dateFormat(new Date(), "dd h:MM");
-  console.log("web scrapper run 20",day);
+  let day = dateFormat(new Date(), "dd h:MM");
+  console.log("Ticker-talks web scrapper run 20", day);
   try {
-    const uri = "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
+    const uri =
+      "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
 
-    let db = await mongoose.connect(uri)
+    let db = await mongoose.connect(uri);
 
-    let data = await getdata([{name:"finology",url:"https://blog.finology.in/ticker-talks"}]);
+    let data = await getdata([{ name: "finology", url: "https://blog.finology.in/ticker-talks" }]);
     // console.log(data);
     let postData = [];
     let popularData = [];
@@ -333,17 +338,17 @@ cron.schedule("0 20 * * *", async () => {
       const item = data[i];
 
       let source = await Source.findOne({ id: item.source.id });
-      if(!source){
+      if (!source) {
         await Source.create({
-          id:item.source.id,
-          title:item.source.title,
-          url:item.source.url,
+          id: item.source.id,
+          title: item.source.title,
+          url: item.source.url,
           categories: [],
           topics: [],
-          updated:"",
-          image:item.source.image,
+          updated: "",
+          image: item.source.image,
           posts: [],
-          items:[]
+          items: [],
         });
       }
 
@@ -381,4 +386,77 @@ cron.schedule("0 20 * * *", async () => {
   }
 });
 
+cron.schedule("0 6 * * *", async () => {
+  let day = dateFormat(new Date(), "dd h:MM");
+  console.log("Finology Blog web scrapper run 6", day);
+  try {
+    const uri =
+      "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
 
+    let db = await mongoose.connect(uri);
+
+    let data = await getdata([{ name: "finology", url: "https://blog.finology.in" }]);
+    // console.log(data);
+    let postData = [];
+    let popularData = [];
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    shuffleArray(data);
+
+    for (let i = 0; i < data.length; i++) {
+      const item = data[i];
+
+      let source = await Source.findOne({ id: item.source.id });
+      if (!source) {
+        await Source.create({
+          id: item.source.id,
+          title: item.source.title,
+          url: item.source.url,
+          categories: [],
+          topics: [],
+          updated: "",
+          image: item.source.image,
+          posts: [],
+          items: [],
+        });
+      }
+
+      let post = await Post.findOne({ id: item.id });
+      let newPost = null;
+      if (!post) {
+        let { id, topic, published, originId, title, author, image, source } = item;
+        newPost = {
+          id,
+          keywords: [topic],
+          originId,
+          published,
+          title,
+          author,
+          canonicalUrl: "",
+          image,
+          source,
+        };
+        postData.push(newPost);
+      }
+
+      let popular = await Popular.findOne({ name: item.id });
+
+      if (!popular) {
+        popularData.push({ name: item.id });
+      }
+    }
+
+    Promise.all([await Post.create(postData), await Popular.create(popularData)]).then((values) => {
+      console.log("success popular", postData.length, popularData.length);
+      db.disconnect();
+    });
+  } catch (error) {
+    console.log(error);
+  }
+});
