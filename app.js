@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const puppeteer = require("puppeteer");
 var cron = require("node-cron");
-
+const dateFormat = require("dateformat");
 
 // const { id, password } = require("../secrate");
 const Sleep = require("./sleep");
@@ -160,7 +160,8 @@ const getdata = async (data) => {
 };
 console.log("start web server");
 cron.schedule("0 11 * * *", async () => {
-  console.log("web scrapper run 11");
+	let day = dateFormat(new Date(), "dd h:MM");
+  console.log("web scrapper run 11",day);
   try {
     const uri = "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
 
@@ -233,7 +234,8 @@ cron.schedule("0 11 * * *", async () => {
 });
 
 cron.schedule("0 15 * * *", async () => {
-  console.log("web scrapper run 15");
+	let day = dateFormat(new Date(), "dd h:MM");
+  console.log("web scrapper run 15",day);
   try {
     const uri = "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
 
@@ -306,7 +308,8 @@ cron.schedule("0 15 * * *", async () => {
 });
 
 cron.schedule("0 20 * * *", async () => {
-  console.log("web scrapper run 20");
+	let day = dateFormat(new Date(), "dd h:MM");
+  console.log("web scrapper run 20",day);
   try {
     const uri = "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
 
