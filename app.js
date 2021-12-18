@@ -11,7 +11,7 @@ const Post = require("./models/post");
 const Source = require("./models/source");
 
 const finologyData = async (url, page) => {
-  await page.goto(url, {
+  await page.goto(url, {  
     waitUntil: "networkidle2",
   });
   await Sleep(5000);
@@ -154,10 +154,80 @@ const getdata = async (data) => {
   browser.close();
   return [...finology, ...indMony];
 };
+
 console.log("start web server");
+
+
+
+const dataBaseUpdate = async (data,db) =>{
+  let popularUpdate = [];
+  let postData = [];
+  let popularData = [];
+
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  shuffleArray(data);
+
+  for (let i = 0; i < data.length; i++) {
+    const item = data[i];
+
+    let source = await Source.findOne({ id: item.source.id });
+    if (!source) {
+      await Source.create({
+        id: item.source.id,
+        title: item.source.title,
+        url: item.source.url,
+        categories: [],
+        topics: [],
+        updated: "",
+        image: item.source.image,
+        posts: [],
+        items: [],
+      });
+    }
+
+    let post = await Post.findOne({ title: item.title });
+    let newPost = null;
+    if (!post) {
+      let { id, topic, published, originId, title, author, image, source } = item;
+      newPost = {
+        id,
+        keywords: [topic],
+        originId,
+        published,
+        title,
+        author,
+        canonicalUrl: "",
+        image,
+        source,
+      };
+      postData.push(newPost);
+    }
+
+    let popular = await Popular.findOne({ title: item.title });
+
+    if (!popular) {
+      popularData.push({ title: item.title });
+    } else{
+      popularUpdate.push(Popular.findOneAndUpdate({ title: item.title }, {title: item.title}, { new: true }).exec());
+    }
+  }
+
+  Promise.all([await Post.create(postData), await Popular.create(popularData),popularUpdate]).then((values) => {
+    console.log("success popular", postData.length, popularData.length);
+    db.disconnect();
+  });
+}
+
 cron.schedule("0 11 * * *", async () => {
   let day = dateFormat(new Date(), "dd h:MM");
   console.log("Investing web scrapper run 11", day);
+
   try {
     const uri =
       "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
@@ -172,65 +242,8 @@ cron.schedule("0 11 * * *", async () => {
       { name: "indMony", url: "https://www.indmoney.com/articles" },
     ]);
     // console.log(data);
-    let postData = [];
-    let popularData = [];
-
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-    }
-
-    shuffleArray(data);
-
-    for (let i = 0; i < data.length; i++) {
-      const item = data[i];
-
-      let source = await Source.findOne({ id: item.source.id });
-      if (!source) {
-        await Source.create({
-          id: item.source.id,
-          title: item.source.title,
-          url: item.source.url,
-          categories: [],
-          topics: [],
-          updated: "",
-          image: item.source.image,
-          posts: [],
-          items: [],
-        });
-      }
-
-      let post = await Post.findOne({ id: item.id });
-      let newPost = null;
-      if (!post) {
-        let { id, topic, published, originId, title, author, image, source } = item;
-        newPost = {
-          id,
-          keywords: [topic],
-          originId,
-          published,
-          title,
-          author,
-          canonicalUrl: "",
-          image,
-          source,
-        };
-        postData.push(newPost);
-      }
-
-      let popular = await Popular.findOne({ name: item.id });
-
-      if (!popular) {
-        popularData.push({ name: item.id });
-      }
-    }
-
-    Promise.all([await Post.create(postData), await Popular.create(popularData)]).then((values) => {
-      console.log("success popular", postData.length, popularData.length);
-      db.disconnect();
-    });
+    await dataBaseUpdate(data,db)
+   
   } catch (error) {
     console.log(error);
   }
@@ -239,6 +252,10 @@ cron.schedule("0 11 * * *", async () => {
 cron.schedule("0 15 * * *", async () => {
   let day = dateFormat(new Date(), "dd h:MM");
   console.log("Finance web scrapper run 15", day);
+
+
+
+
   try {
     const uri =
       "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
@@ -246,66 +263,8 @@ cron.schedule("0 15 * * *", async () => {
     let db = await mongoose.connect(uri);
 
     let data = await getdata([{ name: "finology", url: "https://blog.finology.in/finance" }]);
-    // console.log(data);
-    let postData = [];
-    let popularData = [];
-
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-    }
-
-    shuffleArray(data);
-
-    for (let i = 0; i < data.length; i++) {
-      const item = data[i];
-
-      let source = await Source.findOne({ id: item.source.id });
-      if (!source) {
-        await Source.create({
-          id: item.source.id,
-          title: item.source.title,
-          url: item.source.url,
-          categories: [],
-          topics: [],
-          updated: "",
-          image: item.source.image,
-          posts: [],
-          items: [],
-        });
-      }
-
-      let post = await Post.findOne({ id: item.id });
-      let newPost = null;
-      if (!post) {
-        let { id, topic, published, originId, title, author, image, source } = item;
-        newPost = {
-          id,
-          keywords: [topic],
-          originId,
-          published,
-          title,
-          author,
-          canonicalUrl: "",
-          image,
-          source,
-        };
-        postData.push(newPost);
-      }
-
-      let popular = await Popular.findOne({ name: item.id });
-
-      if (!popular) {
-        popularData.push({ name: item.id });
-      }
-    }
-
-    Promise.all([await Post.create(postData), await Popular.create(popularData)]).then((values) => {
-      console.log("success popular", postData.length, popularData.length);
-      db.disconnect();
-    });
+    await dataBaseUpdate(data,db)
+  
   } catch (error) {
     console.log(error);
   }
@@ -314,6 +273,7 @@ cron.schedule("0 15 * * *", async () => {
 cron.schedule("0 20 * * *", async () => {
   let day = dateFormat(new Date(), "dd h:MM");
   console.log("Ticker-talks web scrapper run 20", day);
+
   try {
     const uri =
       "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
@@ -321,66 +281,10 @@ cron.schedule("0 20 * * *", async () => {
     let db = await mongoose.connect(uri);
 
     let data = await getdata([{ name: "finology", url: "https://blog.finology.in/ticker-talks" }]);
-    // console.log(data);
-    let postData = [];
-    let popularData = [];
+  
+    await dataBaseUpdate(data,db)
 
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-    }
 
-    shuffleArray(data);
-
-    for (let i = 0; i < data.length; i++) {
-      const item = data[i];
-
-      let source = await Source.findOne({ id: item.source.id });
-      if (!source) {
-        await Source.create({
-          id: item.source.id,
-          title: item.source.title,
-          url: item.source.url,
-          categories: [],
-          topics: [],
-          updated: "",
-          image: item.source.image,
-          posts: [],
-          items: [],
-        });
-      }
-
-      let post = await Post.findOne({ id: item.id });
-      let newPost = null;
-      if (!post) {
-        let { id, topic, published, originId, title, author, image, source } = item;
-        newPost = {
-          id,
-          keywords: [topic],
-          originId,
-          published,
-          title,
-          author,
-          canonicalUrl: "",
-          image,
-          source,
-        };
-        postData.push(newPost);
-      }
-
-      let popular = await Popular.findOne({ name: item.id });
-
-      if (!popular) {
-        popularData.push({ name: item.id });
-      }
-    }
-
-    Promise.all([await Post.create(postData), await Popular.create(popularData)]).then((values) => {
-      console.log("success popular", postData.length, popularData.length);
-      db.disconnect();
-    });
   } catch (error) {
     console.log(error);
   }
@@ -389,6 +293,7 @@ cron.schedule("0 20 * * *", async () => {
 cron.schedule("0 6 * * *", async () => {
   let day = dateFormat(new Date(), "dd h:MM");
   console.log("Finology Blog web scrapper run 6", day);
+
   try {
     const uri =
       "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
@@ -396,66 +301,9 @@ cron.schedule("0 6 * * *", async () => {
     let db = await mongoose.connect(uri);
 
     let data = await getdata([{ name: "finology", url: "https://blog.finology.in" }]);
-    // console.log(data);
-    let postData = [];
-    let popularData = [];
+  
+    await dataBaseUpdate(data,db)
 
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-    }
-
-    shuffleArray(data);
-
-    for (let i = 0; i < data.length; i++) {
-      const item = data[i];
-
-      let source = await Source.findOne({ id: item.source.id });
-      if (!source) {
-        await Source.create({
-          id: item.source.id,
-          title: item.source.title,
-          url: item.source.url,
-          categories: [],
-          topics: [],
-          updated: "",
-          image: item.source.image,
-          posts: [],
-          items: [],
-        });
-      }
-
-      let post = await Post.findOne({ id: item.id });
-      let newPost = null;
-      if (!post) {
-        let { id, topic, published, originId, title, author, image, source } = item;
-        newPost = {
-          id,
-          keywords: [topic],
-          originId,
-          published,
-          title,
-          author,
-          canonicalUrl: "",
-          image,
-          source,
-        };
-        postData.push(newPost);
-      }
-
-      let popular = await Popular.findOne({ name: item.id });
-
-      if (!popular) {
-        popularData.push({ name: item.id });
-      }
-    }
-
-    Promise.all([await Post.create(postData), await Popular.create(popularData)]).then((values) => {
-      console.log("success popular", postData.length, popularData.length);
-      db.disconnect();
-    });
   } catch (error) {
     console.log(error);
   }
