@@ -1,10 +1,7 @@
-const mongoose = require("mongoose");
-
 const puppeteer = require("puppeteer");
+const mongoose = require("mongoose");
 var cron = require("node-cron");
 
-
-// const { id, password } = require("../secrate");
 const Sleep = require("./sleep");
 const Popular = require("./models/popular");
 const Post = require("./models/post");
@@ -158,7 +155,7 @@ const getdata = async (data) => {
   browser.close();
   return [...finology,...indMony];
 };
-console.log("start web server");
+
 cron.schedule("0 11 * * *", async () => {
   console.log("web scrapper run 11");
   try {
