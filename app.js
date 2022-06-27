@@ -152,10 +152,7 @@ const getdata = async (data) => {
   return [...finology, ...indMony];
 };
 
-cron.schedule("0 11 * * *", async () => {
-  console.log("web scrapper run 11");
-  try {
-    const uri = "mongodb+srv://shivam:shivam4799@daily-finance.ylo7q.mongodb.net/production?retryWrites=true&w=majority";
+console.log("start web server");
 
 
 
