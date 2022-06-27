@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "axios": "^0.19.2",
+    "dateformat": "^4.5.1",
     "mongoose": "^6.0.5",
     "node-cron": "^3.0.0",
     "puppeteer": "^2.1.1"
